@@ -1,0 +1,108 @@
+@startuml VScRAG_System_DFD
+!define RECTANGLE class
+
+title VScRAG System - Data Flow Diagram (DFD)
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName メイリオ
+
+' 外部エンティティの定義
+rectangle "GitHub Copilot" as copilot #LightBlue
+rectangle "ユーザー" as user #LightGreen
+rectangle "HuggingFace\nモデルハブ" as huggingface #LightYellow
+
+' プロセスの定義
+usecase p1 [
+    VScRAG_Proc_001
+    --
+    MCPサーバー処理
+    --
+    - MCPツール提供 (search_documents/get_db_stats)
+    - 非同期処理 (asyncio)
+    - 検索クエリ受信と結果返却
+]
+
+usecase p2 [
+    VScRAG_Proc_002
+    --
+    ベクトルDB管理
+    --
+    - FAISS類似度検索
+    - L2距離計算
+    - Top-k取得
+    - インデックスR/W
+]
+
+usecase p3 [
+    VScRAG_Proc_003
+    --
+    ドキュメント追加
+    --
+    - バッチ処理でDB登録 (10件/バッチ)
+    - Markdown分割
+    - メタデータ付与
+]
+
+usecase p4 [
+    VScRAG_Proc_004
+    --
+    テキストチャンク化
+    --
+    - RecursiveCharacterTextSplitter使用
+    - チャンクサイズ: 1000文字
+    - オーバーラップ: 200文字
+    - セクション分割対応
+]
+
+usecase p5 [
+    VScRAG_Proc_005
+    --
+    ベクトル埋め込み生成
+    --
+    - HuggingFace Embeddings使用
+    - モデル: multilingual-e5-base
+    - 正規化有効
+    - CPU実行
+]
+
+' データストアの定義
+database "D1:\nFAISSベクトルDB\n(copilot_rag.faiss)" as d1 #Pink
+database "D2:\nドキュメントストア\n(copilot_rag.pkl)" as d2 #Pink
+
+' データフローの定義
+
+' GitHub Copilot → MCPサーバー
+copilot -down-> p1 : 検索クエリ\n(query, top_k)
+p1 -up-> copilot : 検索結果\n(documents + score)
+copilot -down-> p1 : DB統計要求
+p1 -up-> copilot : DB統計情報
+
+' MCPサーバー → ベクトルDB管理
+p1 -right-> p2 : 検索クエリ\n(query, k)
+p2 -left-> p1 : 類似ドキュメント\n(doc + score)
+p1 -right-> p2 : 統計情報要求
+p2 -left-> p1 : DB統計\n(document count)
+
+' ベクトルDB管理 ⇔ データストア
+p2 <-down-> d1 : ベクトル検索\nインデックス\nR/W
+p2 <-down-> d2 : ドキュメント\nメタデータ\nR/W
+
+' ユーザー → ドキュメント追加
+user -down-> p3 : ファイル/フォルダ\nパス指定
+p3 -up-> user : 処理完了通知\n(追加件数)
+
+' ドキュメント追加 → チャンク化
+p3 -right-> p4 : Markdownファイル\nテキストファイル
+p4 -left-> p3 : チャンク化された\nテキスト片
+
+' ドキュメント追加 → ベクトルDB管理
+p3 -down-> p2 : テキスト+メタデータ\nバッチ追加
+
+' ベクトルDB管理 → 埋め込み生成
+p2 -right-> p5 : テキスト
+p5 -left-> p2 : ベクトル表現\n(embeddings)
+
+' 埋め込み生成 → HuggingFace
+p5 -up-> huggingface : モデル取得要求\n(multilingual-e5-base)
+huggingface -down-> p5 : 埋め込みモデル\n(初回のみ)
+
+@enduml

@@ -2,12 +2,37 @@ site_name: VScRAG 設計ドキュメント
 site_description: VScode RAGシステムの設計・実装ドキュメント
 site_author: Yuki Iida
 
-extra_css:
-  - css/custom.css
-# ドキュメントのソースファイルが置かれているフォルダを指定
 docs_dir: docs
 
 # テーマの設定
+theme:
+  name: material
+  language: ja
+  palette:
+    - scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: ダークモードに切り替え
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: ライトモードに切り替え
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+  font:
+    text: Noto Sans JP
+    code: Roboto Mono
 
 
 # Markdown拡張機能の設定
@@ -23,8 +48,8 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.highlight
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 # Plugins
 plugins:
