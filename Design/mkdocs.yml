@@ -1,0 +1,33 @@
+site_name: VScRAG 設計ドキュメント
+site_description: VScode RAGシステムの設計・実装ドキュメント
+site_author: Yuki Iida
+
+extra_css:
+  - css/custom.css
+# ドキュメントのソースファイルが置かれているフォルダを指定
+docs_dir: docs
+
+# テーマの設定
+
+
+# Markdown拡張機能の設定
+markdown_extensions:
+  - plantuml_markdown:
+      plantuml_cmd: 'java -jar C:\Plantuml\plantuml.jar'
+      format: svg # 生成する画像の形式 (svg または png)
+      base_dir: 'docs'  # PlantUMLのincludeパスのベースディレクトリ
+  - markdown.extensions.toc:
+      permalink: true
+  - markdown.extensions.admonition
+  - markdown.extensions.sane_lists
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+# Plugins
+plugins:
+  - search
+
+use_directory_urls: false

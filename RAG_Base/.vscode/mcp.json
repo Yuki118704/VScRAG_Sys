@@ -1,0 +1,13 @@
+{
+    "servers": {
+        "vscrag": {
+            "type": "stdio",
+            "command": "py",
+            "args": ["mcp_server.py"],
+            "cwd": "C:\\Users\\10035AD240473\\Desktop\\RAG_Base\\RAG_Sys",
+            "env": {
+                "PYTHONIOENCODING": "utf-8"
+            }
+        }
+    }
+}
