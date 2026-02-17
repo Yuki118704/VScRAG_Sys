@@ -1,0 +1,92 @@
+@startuml VScRAGユースケース図
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+' アクター定義
+actor "GitHub Copilot" as copilot
+actor "開発者" as developer
+actor "システム管理者" as admin
+
+' システム境界
+rectangle "VScRAG System" {
+    
+    ' ユースケース定義
+    usecase "ドキュメントを検索" as UC1
+    usecase "検索結果を取得" as UC2
+    usecase "DB統計情報を取得" as UC3
+    
+    usecase "ドキュメントを追加" as UC4
+    usecase "ファイルを読み込み" as UC5
+    usecase "テキストを分割" as UC6
+    usecase "ベクトル化して保存" as UC7
+    
+    usecase "システムを初期化" as UC8
+    usecase "モデルをダウンロード" as UC9
+    usecase "DBを作成/読込" as UC10
+}
+
+' アクターとユースケースの関連
+copilot --> UC1 : クエリ送信
+copilot --> UC3 : 統計確認
+
+developer --> UC4 : ドキュメント登録
+developer --> UC8 : 初期セットアップ
+
+admin --> UC9 : モデル管理
+
+' ユースケース間の関係
+UC1 ..> UC2 : <<include>>
+UC1 ..> UC10 : <<include>>
+
+UC4 ..> UC5 : <<include>>
+UC4 ..> UC6 : <<include>>
+UC4 ..> UC7 : <<include>>
+
+UC8 ..> UC9 : <<include>>
+UC8 ..> UC10 : <<include>>
+
+UC6 ..> UC7 : <<extend>>\n[チャンク化有効時]
+
+' ノート
+note right of UC1
+  MCP search_documentsツール
+  top_k: デフォルト3件
+end note
+
+note right of UC4
+  コマンドライン実行:
+  python add_to_db.py <file/folder>
+  
+  サポート形式:
+  - Markdown (.md)
+  - テキスト (.txt)
+  - フォルダ一括追加
+end note
+
+note bottom of UC6
+  設定:
+  CHUNK_SIZE = 1000
+  CHUNK_OVERLAP = 200
+  
+  分割方法:
+  - Markdown: 見出し(##)で分割
+  - その後、RecursiveCharacterTextSplitter
+end note
+
+note right of UC9
+  モデル:
+  intfloat/multilingual-e5-base
+  
+  保存先:
+  ~/.cache/huggingface/hub/
+end note
+
+note bottom of UC10
+  保存先:
+  ./mcp_faiss_db/
+  - copilot_rag.faiss
+  - copilot_rag.pkl
+end note
+
+@enduml

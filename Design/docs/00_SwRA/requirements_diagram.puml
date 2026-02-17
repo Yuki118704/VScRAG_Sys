@@ -1,0 +1,64 @@
+@startuml VScRAG要求図
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+' 要求定義
+package "機能要求" {
+    rectangle "FR-001\nドキュメント検索\n[優先度:高]" as FR001 #LightBlue
+    rectangle "FR-002\nドキュメント追加\n[優先度:高]" as FR002 #LightBlue
+    rectangle "FR-003\nチャンク化処理\n[優先度:中]" as FR003 #LightBlue
+    rectangle "FR-004\nDB統計情報取得\n[優先度:低]" as FR004 #LightBlue
+}
+
+package "非機能要求" {
+    rectangle "NFR-001\n多言語対応\n[優先度:高]" as NFR001 #LightGreen
+    rectangle "NFR-002\n永続化\n[優先度:高]" as NFR002 #LightGreen
+    rectangle "NFR-003\nMCPプロトコル\n[優先度:高]" as NFR003 #LightGreen
+}
+
+package "コンポーネント" {
+    component [MCPサーバ] as mcp
+    component [ベクトルDB] as vdb
+    component [追加スクリプト] as add
+}
+
+' 要求とコンポーネントの関係
+FR001 --> mcp : 実現
+FR004 --> mcp : 実現
+FR002 --> add : 実現
+FR003 --> add : 実現
+
+mcp --> vdb : 使用
+add --> vdb : 使用
+
+NFR001 --> vdb : 実現
+NFR002 --> vdb : 実現
+NFR003 --> mcp : 実現
+
+' 要求間の依存関係
+FR001 ..> FR002 : depends
+FR003 ..> FR002 : refines
+
+note right of NFR001
+  モデル: intfloat/multilingual-e5-base
+  日本語、英語等をサポート
+end note
+
+note right of NFR002
+  FAISS形式で保存
+  ./mcp_faiss_db/配下
+end note
+
+note left of FR001
+  ユーザーがクエリを入力すると
+  ベクトルDBから関連する
+  ドキュメントを検索して返す
+end note
+
+note left of FR002
+  ファイルまたはフォルダから
+  ドキュメントをベクトルDBに追加
+end note
+
+@enduml
