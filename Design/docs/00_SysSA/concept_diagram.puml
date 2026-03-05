@@ -1,0 +1,64 @@
+@startuml concept_diagram
+!theme plain
+title VScRAG System Concept Diagram\nVScRAG システムコンセプト図
+
+
+' ========== Stakeholders / ステークホルダ ==========
+rectangle "外部ステークホルダ" #E8F5E9 {
+    actor "開発者\n(Developer)" as Developer #90CAF9
+    
+    rectangle "GitHub Copilot\n(AI Assistant)" as Copilot #B39DDB {
+    }
+}
+
+' ========== VScRAG System Boundary / システム境界 ==========
+package "VScRAG System" #FFF3E0 {
+    
+    ' MCP Layer
+    rectangle "RAG MCPサーバー\n(mcp_server.py)" as MCPServer #FFCC80 {
+        rectangle "search_documents\nドキュメント検索" as SearchTool #FFE0B2
+        rectangle "get_db_stats\n統計情報取得" as StatsTool #FFE0B2
+    }
+    
+    ' Vector DB Layer
+    rectangle "ベクトルデータベース\n(vector_db.py)" as VectorDB #81D4FA {
+        rectangle "FAISS\nベクトルインデックス" as FAISS #B3E5FC
+        rectangle "Document Store\nドキュメントストア" as DocStore #B3E5FC
+    }
+    
+    ' Embedding Layer
+    rectangle "埋め込みモデル\nHuggingFace Embeddings\n(multilingual-e5-base)" as Embeddings #A5D6A7
+    
+    ' Data Management
+    rectangle "データベース作成\n(add_to_db.py)" as DataMgmt #EF9A9A {
+        rectangle "Markdown Parser\nマークダウン解析" as Parser #FFCDD2
+        rectangle "Text Chunker\nテキスト分割" as Chunker #FFCDD2
+    }
+    
+    database "FAISS DB\n(mcp_faiss_db/)" as FAISSFile #90CAF9
+
+}
+
+
+' ========== Relationships / 関係 ==========
+' Developer interactions
+Developer -left-> Copilot : 質問/リクエスト
+Developer --> DataMgmt : ドキュメント追加
+
+
+' MCP internal
+MCPServer --> VectorDB : 類似検索
+MCPServer --> FAISSFile : 統計取得
+
+' Vector DB operations
+VectorDB --> Embeddings : ベクトル化
+VectorDB --> FAISSFile : 永続化
+
+' Data Management
+DataMgmt --> VectorDB : ドキュメント追加
+
+' Response flow
+MCPServer --> Copilot : 検索結果
+Copilot --> Developer : 回答生成
+
+@enduml
