@@ -1,0 +1,53 @@
+@startuml RAG_Agent_Block_Diagram
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title RAG Agent システムブロック定義図
+
+package "RAG Agent" as agent_pkg <<Agent>> {
+    rectangle "rag.agent.md\n--\n- Agentの呼び出し定義\n- 利用ツールの制限\n- スクリプト実行の指示" as agent_def
+}
+
+package "RAG_Agent/scripts" as scripts {
+    rectangle "search_rag.py\n--\n- 検索クエリの受付\n- 類似度検索の実行\n- 検索結果の整形・出力" as search_script
+    rectangle "add_to_rag.py\n--\n- ファイル/フォルダの読み込み\n- テキストのチャンク分割\n- ベクトルDBへの登録・保存" as add_script
+    rectangle "get_stats.py\n--\n- DBのドキュメント数取得\n- ソース一覧の収集\n- ファイルサイズの報告" as stats_script
+    rectangle "vector_db.py\n--\n- 埋め込みモデルのロード\n- FAISSベクトルストアの接続管理\n- DBの保存処理" as vector_db
+}
+
+package "External Libraries" as libs {
+    rectangle "LangChain\n--\nドキュメント分割・ベクトルストア\n操作の抽象化フレームワーク" as langchain
+    rectangle "FAISS\n--\nFacebook製の高速\nベクトル類似度検索エンジン" as faiss_lib
+    rectangle "HuggingFace Embeddings\n--\nテキストをベクトル（数値）に\n変換する埋め込みモデルの実行環境" as hf
+}
+
+database "RAG_Agent/faiss_db" as db {
+    rectangle "copilot_rag.faiss\n--\nベクトルインデックスの実体" as faiss_index
+    rectangle "copilot_rag.pkl\n--\nドキュメント本文・メタデータの保存" as docstore
+}
+
+
+agent_def --> search_script : ターミナル実行\n(検索)
+agent_def --> add_script : ターミナル実行\n(追加)
+agent_def --> stats_script : ターミナル実行\n(統計)
+
+' スクリプト → vector_db（モデル/DB接続取得）
+search_script --> vector_db : モデル/DB取得
+add_script --> vector_db : モデル/DB取得
+stats_script --> vector_db : モデル/DB取得
+
+' スクリプト → データベース（直接操作）
+search_script --> faiss_index : 検索
+add_script --> faiss_index : 書き込み
+add_script --> docstore : 書き込み
+stats_script --> faiss_index : 読み取り
+stats_script --> docstore : 読み取り
+
+' vector_db → 外部ライブラリ
+vector_db --> langchain : 使用
+vector_db --> faiss_lib : 使用
+vector_db --> hf : 使用
+
+
+@enduml
