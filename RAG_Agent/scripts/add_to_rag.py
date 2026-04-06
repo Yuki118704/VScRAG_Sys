@@ -76,6 +76,59 @@ def split_large_chunks(text: str, source: str, chunk_size: int = CHUNK_SIZE, chu
     return result
 
 
+def split_json_by_items(content: str, source_file: str) -> list[tuple[str, str]]:
+    """JSONの配列要素を1件ずつドキュメントに変換する"""
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError as e:
+        print(f"     ⚠️  JSON解析エラー: {e}")
+        return [(content, source_file)]
+
+    # トップレベルが配列の場合はそのまま使用
+    # トップレベルがオブジェクトの場合は配列値を探す
+    items = None
+    array_key = None
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict):
+                items = value
+                array_key = key
+                break
+
+    if items is None:
+        # 配列が見つからない場合はオブジェクト全体を1ドキュメントとして扱う
+        text = json.dumps(data, ensure_ascii=False, indent=2)
+        return [(text, source_file)]
+
+    results = []
+    for i, item in enumerate(items, 1):
+        # 各フィールドを「フィールド名: 値」の形式で自然文に変換
+        lines = []
+        for key, value in item.items():
+            if isinstance(value, list):
+                value_str = "、".join(
+                    v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+                    for v in value
+                )
+            else:
+                value_str = str(value)
+            lines.append(f"{key}: {value_str}")
+        text = "\n".join(lines)
+
+        # ソース名: ファイル名 - 配列キー[インデックス] or ファイル名[インデックス]
+        item_id = item.get("id") or item.get("name") or item.get("title") or str(i)
+        if array_key:
+            source = f"{source_file} - {array_key}[{item_id}]"
+        else:
+            source = f"{source_file}[{item_id}]"
+
+        results.append((text, source))
+
+    return results
+
+
 def split_markdown_by_sections(content: str, source_file: str) -> list[tuple[str, str]]:
     """Markdownを見出しごとに分割"""
     sections = []
@@ -127,6 +180,10 @@ def process_file(file_path: Path, chunk_size: int = CHUNK_SIZE, chunk_overlap: i
             print(f"     → {section_count}セクションに分割")
         
         return all_chunks
+    elif file_path.suffix.lower() == '.json':
+        items = split_json_by_items(content, file_path.name)
+        print(f"     → {len(items)}件のアイテムに分割")
+        return items
     else:
         chunks = split_large_chunks(content, str(file_path.name), chunk_size, chunk_overlap)
         if len(chunks) > 1:

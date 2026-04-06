@@ -48,7 +48,7 @@ stats_script --> docstore : 読み取り
 scripts o--> libs : 使用
 
 ' ③共有関連: スクリプト → 設定ファイル（複数スクリプトが共有）
-scripts o--> config : 参照
+scripts o-left-> config : 参照
 
 
 @enduml

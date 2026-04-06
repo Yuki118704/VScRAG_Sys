@@ -95,7 +95,7 @@ def main():
             print("=" * 60)
             
             for i, item in enumerate(result["results"], 1):
-                print(f"\n【結果 {i}】スコア: {item['score']:.4f}")
+                print(f"\n【結果 {i}】ベクトル距離: {item['score']:.4f}")
                 if item["metadata"]:
                     source = item["metadata"].get("source", "不明")
                     print(f"📁 ソース: {source}")
