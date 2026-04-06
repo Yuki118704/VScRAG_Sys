@@ -11,7 +11,11 @@ import os
 import argparse
 import json
 
-from vector_db import get_embeddings, load_vectorstore, DB_PATH
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from config import EMBEDDING_MODEL, EMBEDDING_DEVICE, COLLECTION_NAME, DB_PATH
 
 
 def search_documents(query: str, top_k: int = 3) -> dict:
@@ -25,15 +29,23 @@ def search_documents(query: str, top_k: int = 3) -> dict:
     Returns:
         検索結果の辞書
     """
-    embeddings = get_embeddings()
-    vectorstore = load_vectorstore(embeddings)
-    
-    if vectorstore is None:
+    index_path = os.path.join(DB_PATH, f"{COLLECTION_NAME}.faiss")
+    if not os.path.exists(index_path):
         return {
             "status": "no_results",
             "message": "データベースが存在しません",
             "query": query
         }
+    
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        model_kwargs={"device": EMBEDDING_DEVICE},
+        encode_kwargs={"normalize_embeddings": True}
+    )
+    vectorstore = FAISS.load_local(
+        DB_PATH, embeddings, COLLECTION_NAME,
+        allow_dangerous_deserialization=True
+    )
     
     # 検索実行
     results = vectorstore.similarity_search_with_score(query=query, k=top_k)

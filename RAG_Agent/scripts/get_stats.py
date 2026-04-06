@@ -12,7 +12,11 @@ import argparse
 import json
 from pathlib import Path
 
-from vector_db import get_embeddings, load_vectorstore, DB_PATH
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from config import EMBEDDING_MODEL, EMBEDDING_DEVICE, COLLECTION_NAME, DB_PATH
 
 
 def get_db_stats() -> dict:
@@ -25,8 +29,8 @@ def get_db_stats() -> dict:
     db_path = DB_PATH
     
     # FAISSファイルの存在確認
-    faiss_file = os.path.join(db_path, "copilot_rag.faiss")
-    pkl_file = os.path.join(db_path, "copilot_rag.pkl")
+    faiss_file = os.path.join(db_path, f"{COLLECTION_NAME}.faiss")
+    pkl_file = os.path.join(db_path, f"{COLLECTION_NAME}.pkl")
     
     if not os.path.exists(faiss_file):
         return {
@@ -40,8 +44,15 @@ def get_db_stats() -> dict:
     pkl_size = os.path.getsize(pkl_file) if os.path.exists(pkl_file) else 0
     
     # データベースに接続
-    embeddings = get_embeddings()
-    vectorstore = load_vectorstore(embeddings)
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        model_kwargs={"device": EMBEDDING_DEVICE},
+        encode_kwargs={"normalize_embeddings": True}
+    )
+    vectorstore = FAISS.load_local(
+        db_path, embeddings, COLLECTION_NAME,
+        allow_dangerous_deserialization=True
+    )
     
     # ドキュメント数を取得
     doc_count = 0

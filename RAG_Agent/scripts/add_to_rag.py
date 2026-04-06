@@ -14,9 +14,12 @@ import argparse
 import json
 from pathlib import Path
 
-from vector_db import get_embeddings, load_vectorstore, save_vectorstore, DB_PATH
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from config import EMBEDDING_MODEL, EMBEDDING_DEVICE, COLLECTION_NAME, DB_PATH
 
 
 # ========== チャンク化設定 ==========
@@ -188,8 +191,20 @@ def add_documents(target_path: str, chunk_size: int = CHUNK_SIZE, chunk_overlap:
     # データベースに追加
     print("\n🔧 データベースを初期化中...")
     
-    embeddings = get_embeddings()
-    vectorstore = load_vectorstore(embeddings)
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        model_kwargs={"device": EMBEDDING_DEVICE},
+        encode_kwargs={"normalize_embeddings": True}
+    )
+    
+    # 既存DBがあれば読み込み
+    index_path = os.path.join(DB_PATH, f"{COLLECTION_NAME}.faiss")
+    vectorstore = None
+    if os.path.exists(index_path):
+        vectorstore = FAISS.load_local(
+            DB_PATH, embeddings, COLLECTION_NAME,
+            allow_dangerous_deserialization=True
+        )
     
     print(f"💾 {len(all_texts)} 件のドキュメントを追加中...")
     
@@ -216,7 +231,10 @@ def add_documents(target_path: str, chunk_size: int = CHUNK_SIZE, chunk_overlap:
         processed = min(i + batch_size, len(all_texts))
         print(f"  進捗: {processed}/{len(all_texts)} 件完了")
     
-    save_vectorstore(vectorstore)
+    # データベースを保存
+    os.makedirs(DB_PATH, exist_ok=True)
+    vectorstore.save_local(DB_PATH, COLLECTION_NAME)
+    print("💾 データベースを保存しました")
     
     print("\n" + "=" * 60)
     print("✅ 完了！")

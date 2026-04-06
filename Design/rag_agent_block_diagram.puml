@@ -13,13 +13,16 @@ package "RAG_Agent/scripts" as scripts {
     rectangle "search_rag.py\n--\n- 検索クエリの受付\n- 類似度検索の実行\n- 検索結果の整形・出力" as search_script
     rectangle "add_to_rag.py\n--\n- ファイル/フォルダの読み込み\n- テキストのチャンク分割\n- ベクトルDBへの登録・保存" as add_script
     rectangle "get_stats.py\n--\n- DBのドキュメント数取得\n- ソース一覧の収集\n- ファイルサイズの報告" as stats_script
-    rectangle "vector_db.py\n--\n- 埋め込みモデルのロード\n- FAISSベクトルストアの接続管理\n- DBの保存処理" as vector_db
 }
 
+rectangle "config.py\n--\n- 埋め込みモデル名\n- DBパス・コレクション名\n--\n使用元: 全スクリプト" as config
+
 package "External Libraries" as libs {
-    rectangle "LangChain\n--\nドキュメント分割・ベクトルストア\n操作の抽象化フレームワーク" as langchain
-    rectangle "FAISS\n--\nFacebook製の高速\nベクトル類似度検索エンジン" as faiss_lib
-    rectangle "HuggingFace Embeddings\n--\nテキストをベクトル（数値）に\n変換する埋め込みモデルの実行環境" as hf
+    rectangle "LangChain\n--\nドキュメント分割・ベクトルストア\n操作の抽象化フレームワーク\n--\n使用元: add_to_rag.py" as langchain
+    rectangle "FAISS\n--\nFacebook製の高速\nベクトル類似度検索エンジン\n--\n使用元: 全スクリプト" as faiss_lib
+    rectangle "HuggingFace Embeddings\n--\nテキストをベクトル（数値）に\n変換する埋め込みモデルの実行環境\n--\n使用元: 全スクリプト" as hf
+    langchain -[hidden]down-> faiss_lib
+    faiss_lib -[hidden]down-> hf
 }
 
 database "RAG_Agent/faiss_db" as db {
@@ -28,26 +31,24 @@ database "RAG_Agent/faiss_db" as db {
 }
 
 
+' ①関連: Agent → Scripts（実行依存）
 agent_def --> search_script : ターミナル実行\n(検索)
 agent_def --> add_script : ターミナル実行\n(追加)
 agent_def --> stats_script : ターミナル実行\n(統計)
 
-' スクリプト → vector_db（モデル/DB接続取得）
-search_script --> vector_db : モデル/DB取得
-add_script --> vector_db : モデル/DB取得
-stats_script --> vector_db : モデル/DB取得
 
-' スクリプト → データベース（直接操作）
+' ①関連: Scripts → DB（直接操作）
 search_script --> faiss_index : 検索
 add_script --> faiss_index : 書き込み
 add_script --> docstore : 書き込み
 stats_script --> faiss_index : 読み取り
 stats_script --> docstore : 読み取り
 
-' vector_db → 外部ライブラリ
-vector_db --> langchain : 使用
-vector_db --> faiss_lib : 使用
-vector_db --> hf : 使用
+' ③共有関連: スクリプト → 外部ライブラリ（複数スクリプトが共有）
+scripts o--> libs : 使用
+
+' ③共有関連: スクリプト → 設定ファイル（複数スクリプトが共有）
+scripts o--> config : 参照
 
 
 @enduml
