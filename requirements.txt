@@ -1,0 +1,13 @@
+# RAG Agent - 依存ライブラリ
+# インストール: pip install -r requirements.txt
+
+# LangChain 関連
+langchain-community
+langchain-huggingface
+langchain-text-splitters
+
+# ベクトルDB
+faiss-cpu
+
+# 埋め込みモデル
+sentence-transformers
