@@ -6,28 +6,28 @@ skinparam componentStyle rectangle
 title RAG Agent システムブロック定義図
 
 package "RAG Agent" as agent_pkg <<Agent>> {
-    rectangle "rag.agent.md\n--\n- Agentの呼び出し定義\n- 利用ツールの制限\n- スクリプト実行の指示" as agent_def
+    rectangle "エージェント定義\n--\nrag.agent.md\n--\n- Agentの呼び出し定義\n- 利用ツールの制限\n- スクリプト実行の指示" as agent_def
 }
 
 package "RAG_Agent/scripts" as scripts {
-    rectangle "search_rag.py\n--\n- 検索クエリの受付\n- 類似度検索の実行\n- 検索結果の整形・出力" as search_script
-    rectangle "add_to_rag.py\n--\n- ファイル/フォルダの読み込み\n- テキストのチャンク分割\n- ベクトルDBへの登録・保存" as add_script
-    rectangle "get_stats.py\n--\n- DBのドキュメント数取得\n- ソース一覧の収集\n- ファイルサイズの報告" as stats_script
+    rectangle "RAG検索\n--\nsearch_rag.py\n--\n- 検索クエリの受付\n- 類似度検索の実行\n- 検索結果の整形・出力" as search_script
+    rectangle "ドキュメント追加\n--\nadd_to_rag.py\n--\n- ファイル/フォルダの読み込み\n- テキストのチャンク分割\n- ベクトルDBへの登録・保存" as add_script
+    rectangle "DB統計取得\n--\nget_stats.py\n--\n- DBのドキュメント数取得\n- ソース一覧の収集\n- ファイルサイズの報告" as stats_script
 }
 
-rectangle "config.py\n--\n- 埋め込みモデル名\n- DBパス・コレクション名\n--\n使用元: 全スクリプト" as config
+rectangle "設定管理\n--\nconfig.py\n--\n- 埋め込みモデル名\n- DBパス・コレクション名\n使用元: 全スクリプト" as config
 
 package "External Libraries" as libs {
-    rectangle "LangChain\n--\nドキュメント分割・ベクトルストア\n操作の抽象化フレームワーク\n--\n使用元: add_to_rag.py" as langchain
-    rectangle "FAISS\n--\nFacebook製の高速\nベクトル類似度検索エンジン\n--\n使用元: 全スクリプト" as faiss_lib
-    rectangle "HuggingFace Embeddings\n--\nテキストをベクトル（数値）に\n変換する埋め込みモデルの実行環境\n--\n使用元: 全スクリプト" as hf
+    rectangle "ドキュメント処理\n--\nLangChain\n--\nドキュメント分割・ベクトルストア\n操作の抽象化フレームワーク\n使用元: add_to_rag.py" as langchain
+    rectangle "ベクトル検索\n--\nFAISS\n--\nFacebook製の高速\nベクトル類似度検索エンジン\n使用元: 全スクリプト" as faiss_lib
+    rectangle "テキスト埋め込み\n--\nHuggingFace Embeddings\n--\nテキストをベクトル（数値）に\n変換する埋め込みモデルの実行環境\n使用元: 全スクリプト" as hf
     langchain -[hidden]down-> faiss_lib
     faiss_lib -[hidden]down-> hf
 }
 
 database "RAG_Agent/faiss_db" as db {
-    rectangle "copilot_rag.faiss\n--\nベクトルインデックスの実体" as faiss_index
-    rectangle "copilot_rag.pkl\n--\nドキュメント本文・メタデータの保存" as docstore
+    rectangle "ベクトルインデックス\n--\ncopilot_rag.faiss\n--\nベクトルインデックスの実体" as faiss_index
+    rectangle "ドキュメントストア\n--\ncopilot_rag.pkl\n--\nドキュメント本文・メタデータの保存" as docstore
 }
 
 
